@@ -147,7 +147,7 @@ IceModel::IceModel(IceGrid::Ptr g, Context::Ptr context)
   m_surface = nullptr;
   m_ocean   = nullptr;
   m_beddef  = nullptr;
-  m_delta   = nullptr; //??????????????/???????
+  //m_interface = nullptr; ???????
 
   m_age_model = nullptr;
   m_btu = nullptr;

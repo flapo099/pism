@@ -48,7 +48,7 @@
 #include "pism/coupler/OceanModel.hh"
 #include "pism/coupler/SurfaceModel.hh"
 #include "pism/coupler/atmosphere/Factory.hh"
-#include "pism/coupler/interface/Factory.hh"
+#include "pism/coupler/interface/Factory.cc"
 #include "pism/coupler/interface/Initialization.hh"
 #include "pism/coupler/ocean/Factory.hh"
 #include "pism/coupler/ocean/Initialization.hh"
