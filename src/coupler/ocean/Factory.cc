@@ -1,4 +1,4 @@
-/* Copyright (C) 2015, 2017 PISM Authors
+/* Copyright (C) 2015, 2017, 2018 PISM Authors
  *
  * This file is part of PISM.
  *
@@ -23,24 +23,26 @@
 #include "Constant.hh"
 #include "ConstantPIK.hh"
 #include "GivenClimate.hh"
-#include "Delta_SL.hh"
 #include "Delta_T.hh"
 #include "Delta_SMB.hh"
 #include "Frac_MBP.hh"
 #include "Frac_SMB.hh"
+#include "Runoff_SMB.hh"
 #include "Cache.hh"
 #include "GivenTH.hh"
+#include "Pico.hh"
 
 namespace pism {
 namespace ocean {
 // Ocean
 Factory::Factory(IceGrid::ConstPtr g)
-  : PCFactory<OceanModel,OceanModifier>(g) {
+  : PCFactory<OceanModel>(g) {
   m_option = "ocean";
 
   add_model<GivenTH>("th");
   add_model<PIK>("pik");
   add_model<Constant>("constant");
+  add_model<Pico>("pico");
   add_model<Given>("given");
   set_default("constant");
 
@@ -48,8 +50,8 @@ Factory::Factory(IceGrid::ConstPtr g)
   add_modifier<Delta_SMB>("delta_SMB");
   add_modifier<Frac_SMB>("frac_SMB");
   add_modifier<Delta_T>("delta_T");
-  add_modifier<Delta_MBP>("frac_MBP");
-  add_modifier<Delta_SL>("delta_SL");
+  add_modifier<Runoff_SMB>("runoff_SMB");
+  add_modifier<Frac_MBP>("frac_MBP");
 }
 
 Factory::~Factory() {
