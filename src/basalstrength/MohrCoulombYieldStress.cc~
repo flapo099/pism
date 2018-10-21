@@ -264,7 +264,7 @@ void MohrCoulombYieldStress::update_impl(const YieldStressInputs &inputs) {
     &W_till        = *inputs.till_water_thickness,
     &ice_thickness = inputs.geometry->ice_thickness;
  //   &del           = m_delta; //->delta;   // POSSIBLY to change m_delta to del below!? 2S or below in Vec??  
-  const IceModelVec2S  &del = inputs.interface->delta;
+  const IceModelVec2S  &del = m_delta;
 
   if (add_transportable_water) {
     m_bwat.copy_from(*inputs.subglacial_water_thickness);
