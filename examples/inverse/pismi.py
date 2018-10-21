@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016 David Maxwell and Constantine Khroulev
+# Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Maxwell and Constantine Khroulev
 #
 # This file is part of PISM.
 #
@@ -74,13 +74,13 @@ class InvSSAPlotListener(PISM.invert.listener.PlotListener):
 
         r = self.toproczero(data.residual)
         Td = None
-        if data.has_key('T_zeta_step'):
+        if 'T_zeta_step' in data:
             Td = self.toproczero(data.T_zeta_step)
         TStarR = None
-        if data.has_key('TStar_residual'):
+        if 'TStar_residual' in data:
             TStarR = self.toproczero(data.TStar_residual)
         d = None
-        if data.has_key('zeta_step'):
+        if 'zeta_step' in data:
             d = self.toproczero(data.zeta_step)
         zeta = self.toproczero(data.zeta)
 
@@ -230,7 +230,7 @@ def adjustTauc(mask, tauc):
 
     logMessage("  Adjusting initial estimate of 'tauc' to match PISM model for floating ice and ice-free bedrock.\n")
 
-    grid = mask.get_grid()
+    grid = mask.grid()
     high_tauc = grid.ctx().config().get_double("basal_yield_stress.ice_free_bedrock")
 
     with PISM.vec.Access(comm=tauc, nocomm=mask):
@@ -493,7 +493,7 @@ def run():
     if prep_module is not None:
         if prep_module.endswith(".py"):
             prep_module = prep_module[0:-2]
-        exec "import %s as user_prep_module" % prep_module
+        exec("import %s as user_prep_module" % prep_module)
         user_prep_module.prep_solver(solver)
 
     # Pausing (add this after the user's listeners)

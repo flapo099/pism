@@ -28,7 +28,7 @@ R0 = 1000e3
 
 def initialize_uplift(uplift):
     "Initialize the uplift field."
-    grid = uplift.get_grid()
+    grid = uplift.grid()
     peak_uplift = PISM.convert(ctx.unit_system, 10, "mm/year", "m/second")
     with PISM.vec.Access(nocomm=[uplift]):
         for (i, j) in grid.points():
@@ -39,7 +39,7 @@ def initialize_uplift(uplift):
                 uplift[i, j] = 0.0
 
 def initialize_thickness(thickness, H0):
-    grid = thickness.get_grid()
+    grid = thickness.grid()
     with PISM.vec.Access(nocomm=[thickness]):
         for (i, j) in grid.points():
             r = PISM.radius(grid, i, j)
@@ -55,7 +55,9 @@ def allocate(grid):
     uplift.create(grid, "uplift", PISM.WITHOUT_GHOSTS)
     uplift.set_attrs("internal", "bed uplift", "m / second", "")
 
-    return H, bed, uplift
+    sea_level = PISM.IceModelVec2S(grid, "sea_level", PISM.WITHOUT_GHOSTS)
+
+    return H, bed, uplift, sea_level
 
 def create_grid():
     P = PISM.GridParameters(config)
@@ -85,17 +87,18 @@ def run(scenario, plot, pause, save):
 
     elastic, use_uplift, H0 = scenarios[scenario]
 
-    print "Using scenario %s: elastic model = %s, use uplift = %s, H0 = %f m" % (scenario, elastic, use_uplift, H0)
+    print("Using scenario %s: elastic model = %s, use uplift = %s, H0 = %f m" % (scenario, elastic, use_uplift, H0))
 
     config.set_boolean("bed_deformation.lc.elastic_model", elastic)
 
     grid = create_grid()
 
-    thickness, bed, uplift = allocate(grid)
+    thickness, bed, uplift, sea_level = allocate(grid)
 
     # set initial geometry and uplift
     bed.set(0.0)
     thickness.set(0.0)
+    sea_level.set(0.0)
     if use_uplift:
         initialize_uplift(uplift)
 
@@ -105,7 +108,7 @@ def run(scenario, plot, pause, save):
 
     model = PISM.LingleClark(grid)
 
-    model.bootstrap(bed, uplift, thickness)
+    model.bootstrap(bed, uplift, thickness, sea_level)
 
     # now add the disc load
     initialize_thickness(thickness, H0)
@@ -117,19 +120,19 @@ def run(scenario, plot, pause, save):
         # don't go past the end of the run
         dt_current = min(dt, time.end() - time.current())
 
-        model.update(thickness, time.current(), dt_current)
+        model.update(thickness, sea_level, time.current(), dt_current)
 
         if plot:
             model.bed_elevation().view(400)
             model.uplift().view(400)
 
-        print "t = %s years, dt = %s years" % (time.date(), time.convert_time_interval(dt_current, "years"))
+        print("t = %s years, dt = %s years" % (time.date(), time.convert_time_interval(dt_current, "years")))
         time.step(dt_current)
 
-    print "Reached t = %s years" % time.date()
+    print("Reached t = %s years" % time.date())
 
     if pause:
-        print "Pausing for 5 seconds..."
+        print("Pausing for 5 seconds...")
         PISM.PETSc.Sys.sleep(5)
 
     if save:
