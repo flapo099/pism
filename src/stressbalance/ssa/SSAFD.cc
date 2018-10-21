@@ -1,4 +1,4 @@
-// Copyright (C) 2004--2017 Constantine Khroulev, Ed Bueler and Jed Brown
+// Copyright (C) 2004--2018 Constantine Khroulev, Ed Bueler and Jed Brown
 //
 // This file is part of PISM.
 //
@@ -249,6 +249,7 @@ void SSAFD::assemble_rhs(const Inputs &inputs) {
   const IceModelVec2S
     &thickness             = inputs.geometry->ice_thickness,
     &bed                   = inputs.geometry->bed_elevation,
+    &sea_level             = inputs.geometry->sea_level_elevation,
     *melange_back_pressure = inputs.melange_back_pressure;
 
   const double
@@ -275,7 +276,7 @@ void SSAFD::assemble_rhs(const Inputs &inputs) {
   }
 
   if (use_cfbc) {
-    list.add({&thickness, &bed, &m_mask});
+    list.add({&thickness, &bed, &m_mask, &sea_level});
   }
 
   if (use_cfbc && melange_back_pressure != NULL) {
@@ -338,7 +339,7 @@ void SSAFD::assemble_rhs(const Inputs &inputs) {
         }
 
         double ocean_pressure = ocean_pressure_difference(ocean(M_ij), is_dry_simulation,
-                                                          H_ij, bed(i,j), inputs.sea_level,
+                                                          H_ij, bed(i,j), sea_level(i, j),
                                                           rho_ice, rho_ocean, standard_gravity);
 
         if (melange_back_pressure != NULL) {
@@ -978,7 +979,7 @@ void SSAFD::picard_manager(const Inputs &inputs,
     ierr = KSPSetOperators(m_KSP, m_A, m_A);
     PISM_CHK(ierr, "KSPSetOperator");
 
-    ierr = KSPSolve(m_KSP, m_b.get_vec(), m_velocity_global.get_vec());
+    ierr = KSPSolve(m_KSP, m_b.vec(), m_velocity_global.vec());
     PISM_CHK(ierr, "KSPSolve");
 
     // Check if diverged; report to standard out about iteration
@@ -1414,9 +1415,9 @@ void SSAFD::compute_nuH_staggered_cfbc(const Geometry &geometry,
 
   IceModelVec::AccessList list{&m_mask, &m_work, &m_velocity};
 
-  assert(m_velocity.get_stencil_width() >= 2);
-  assert(m_mask.get_stencil_width()    >= 2);
-  assert(m_work.get_stencil_width()     >= 1);
+  assert(m_velocity.stencil_width() >= 2);
+  assert(m_mask.stencil_width()    >= 2);
+  assert(m_work.stencil_width()     >= 1);
 
   for (PointsWithGhosts p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
@@ -1648,7 +1649,7 @@ void SSAFD::write_system_petsc(const std::string &namepart) {
   ierr = MatView(m_A, viewer);
   PISM_CHK(ierr, "MatView");
 
-  ierr = VecView(m_b.get_vec(), viewer);
+  ierr = VecView(m_b.vec(), viewer);
   PISM_CHK(ierr, "VecView");
 }
 
@@ -1656,8 +1657,6 @@ SSAFD_nuH::SSAFD_nuH(const SSAFD *m)
   : Diag<SSAFD>(m) {
 
   // set metadata:
-  m_dof = 2;
-
   m_vars = {SpatialVariableMetadata(m_sys, "nuH[0]"),
             SpatialVariableMetadata(m_sys, "nuH[1]")};
 
@@ -1679,8 +1678,8 @@ IceModelVec::Ptr SSAFD_nuH::compute_impl() const {
   return result;
 }
 
-std::map<std::string, Diagnostic::Ptr> SSAFD::diagnostics_impl() const {
-  std::map<std::string, Diagnostic::Ptr> result = SSA::diagnostics_impl();
+DiagnosticList SSAFD::diagnostics_impl() const {
+  DiagnosticList result = SSA::diagnostics_impl();
 
   result["nuH"] = Diagnostic::Ptr(new SSAFD_nuH(this));
 

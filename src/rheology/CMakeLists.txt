@@ -1,5 +1,5 @@
 # Flow laws.
-add_library (pismflowlaws OBJECT
+add_library (flowlaws OBJECT
   FlowLaw.cc
   FlowLawFactory.cc
   GPBLD.cc
@@ -12,3 +12,7 @@ add_library (pismflowlaws OBJECT
   GPBLD3.cc
   approximate/gpbld_n.cc
   )
+
+add_executable(gpbld3_test
+  gpbld3_test.cc)
+target_link_libraries (gpbld3_test pism)
