@@ -1,4 +1,4 @@
-/* Copyright (C) 2016, 2017 PISM Authors
+/* Copyright (C) 2016, 2017, 2018 PISM Authors
  *
  * This file is part of PISM.
  *
@@ -20,6 +20,7 @@
 #ifndef _PISM_UTILITIES_H_
 #define _PISM_UTILITIES_H_
 
+#include <algorithm>            // std::min, std::max
 #include <string>
 #include <vector>
 #include <set>
@@ -28,7 +29,7 @@
 
 namespace pism {
 
-// Utilities that do not use PETSc or PISM.
+// Utilities that do not expose PETSc's or PISM's API.
 
 #ifndef __GNUC__
 #  define  __attribute__(x)  /* nothing */
@@ -39,6 +40,7 @@ extern const char *PISM_DefaultConfigFile;
 
 const int TEMPORARY_STRING_LENGTH = 32768; // 32KiB ought to be enough.
 
+double get_time();
 std::string timestamp(MPI_Comm com);
 std::string username_prefix(MPI_Comm com);
 std::string args_string();
@@ -64,7 +66,7 @@ std::set<std::string> set_split(const std::string &input, char separator);
 std::string set_join(const std::set<std::string> &input, const std::string& separator);
 
 // set
-bool set_contains(const std::set<std::string> &S, const std::string &name);
+bool member(const std::string &string, const std::set<std::string> &set);
 
 /*! Helper template function for computing set unions.
  * Ensures that elements of a take precedence. For example, if
@@ -87,6 +89,10 @@ T combine(const T &a, const T&b) {
     result.insert(element);
   }
   return result;
+}
+
+inline double clip(double x, double a, double b) {
+  return std::min(std::max(a, x), b);
 }
 
 // parallel
